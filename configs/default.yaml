@@ -1,0 +1,72 @@
+sample_rate: 22050
+hop_size: 256
+f_min: 0
+f_max: 8000
+win_size: 1024
+n_fft: 1024
+n_mels: 80
+checkpoint_name: non_attentive_tacotron_vctk_default
+seed: 42
+batch_size: 32
+grad_clip_thresh: 10.0
+log_steps: 1000
+iters_per_checkpoint: 30000
+epochs: 300
+test_size: 0.2
+device: cuda
+loss:
+  mels_weight: 1.0
+  duration_weight: 2.0
+optimizer:
+  learning_rate: 0.001
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1e-06
+  reg_weight: 1e-06
+scheduler:
+  start_decay: 4000
+  decay_steps: 50000
+  decay_rate: 0.5
+  last_epoch: 400000
+data:
+  text_dir: data/vctk/mfa_outputs
+  mels_dir: data/vctk/mels
+model:
+  encoder_config:
+    n_convolutions: 3
+    kernel_size: 5
+    conv_channel: 512
+    lstm_layers: 1
+    lstm_hidden: 512
+    dropout: 0.1
+  attention_config:
+    duration_config:
+      lstm_layers: 2
+      lstm_hidden: 512
+      dropout: 0.5
+    range_config:
+      lstm_layers: 2
+      lstm_hidden: 512
+      dropout: 0.5
+    eps: 1e-6
+    positional_dim: 32
+    teacher_forcing_ratio: 1.0
+    attention_dropout: 0.1
+    positional_dropout: 0.0
+  decoder_config:
+    prenet_layers:
+      - 256
+      - 256
+    prenet_dropout: 0.5
+    decoder_rnn_dim: 1024
+    decoder_num_layers: 1
+    teacher_forcing_ratio: 1.0
+    dropout: 0.1
+  postnet_config:
+    embedding_dim: 512
+    n_convolutions: 5
+    kernel_size: 5
+    dropout: 0.1
+  mask_padding: true
+  phonem_embedding_dim: 512
+  speaker_embedding_dim: 64
