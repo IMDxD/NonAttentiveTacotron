@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from src.model.layers import (
-    ConvNorm, Idomp, LinearWithActivation, PositionalEncoding,
+    Conv1DNorm, Idomp, LinearWithActivation, PositionalEncoding,
 )
 
 
@@ -23,7 +23,7 @@ def test_idomp_layer():
 def test_conv_norm_layer(
     kernel_size, output_channel, dilation, input_tensor, expected_shape
 ):
-    layer = ConvNorm(
+    layer = Conv1DNorm(
         input_tensor.shape[1], output_channel, kernel_size, dilation=dilation
     )
     layer_out = layer(input_tensor)
