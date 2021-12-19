@@ -309,7 +309,7 @@ class Decoder(nn.Module):
         )
 
     def forward(self, memory: torch.Tensor, y_mels: torch.Tensor) -> torch.Tensor:
-        previous_frame = torch.zeros(memory.shape[0], 1, self.n_mel_channels).to(self.device)
+        previous_frame = torch.zeros(memory.shape[0], 1, self.n_mel_channels).to(memory.device)
         y_mels = torch.cat((previous_frame, y_mels[:, :-1, :]), dim=1)
         previous_frame = previous_frame[:, 0, :]
 
@@ -336,7 +336,7 @@ class Decoder(nn.Module):
         return mel_tensor_outputs
 
     def inference(self, memory: torch.Tensor) -> torch.Tensor:
-        previous_frame = torch.zeros(memory.shape[0], self.n_mel_channels).to(self.device)
+        previous_frame = torch.zeros(memory.shape[0], self.n_mel_channels).to(memory.device)
 
         mel_outputs = []
         decoder_state = None
@@ -368,7 +368,7 @@ class NonAttentiveTacotron(nn.Module):
     ):
         super().__init__()
 
-        full_embedding_dim = config.phonem_embedding_dim + config.speaker_embedding_dim
+        full_embedding_dim = config.encoder_config.lstm_hidden * 2 + config.speaker_embedding_dim
         self.phonem_embedding = nn.Embedding(n_phonems, config.phonem_embedding_dim, padding_idx=0)
         self.speaker_embedding = nn.Embedding(
             n_speakers,

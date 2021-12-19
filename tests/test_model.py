@@ -70,7 +70,7 @@ for i, l in enumerate(DURATIONS_MAX):
 
 
 def test_encoder_layer() -> None:
-    expected_shape = (16, 50, MODEL_CONFIG.phonem_embedding_dim)
+    expected_shape = (16, 50, MODEL_CONFIG.encoder_config.lstm_hidden * 2)
     layer = Encoder(ModelParams.phonem_embedding_dim, config=ENCODER_CONFIG)
     out = layer(PHONEM_EMB.transpose(1, 2), INPUT_LENGTH)
     assert (
@@ -121,11 +121,7 @@ def test_range_layer() -> None:
         ).any(), f"Wrong zero vector for id = {idx}"
 
 
-@pytest.mark.parametrize(
-    "n_frames_per_step",
-    [1, 3]
-)
-def test_attention_layer_forward(n_frames_per_step: int) -> None:
+def test_attention_layer_forward() -> None:
     expected_shape_out = (
         16,
         DURATIONS_MAX.max().item(),
@@ -145,13 +141,9 @@ def test_attention_layer_forward(n_frames_per_step: int) -> None:
 
 
 @patch(
-    "src.models.feature_models.non_attentive_tacotron.DurationPredictor.forward"
+    "src.model.non_attentive_tacotron.DurationPredictor.forward"
 )
-@pytest.mark.parametrize(
-    "n_frames_per_step",
-    [1, 3]
-)
-def test_attention_layer_inference(mock_duration: MagicMock, n_frames_per_step: int) -> None:
+def test_attention_layer_inference(mock_duration: MagicMock) -> None:
     mock_duration.return_value = INPUT_DURATIONS.unsqueeze(2)
     expected_shape_out = (
         16,
@@ -229,7 +221,7 @@ def test_model_forward() -> None:
     model = NonAttentiveTacotron(
         N_PHONEMES, N_SPEAKER, N_MELS_DIM, config=MODEL_CONFIG
     )
-    durations, mel_fixed, mel_predicted, style_emb, speaker_emb = model(MODEL_INPUT)
+    durations, mel_fixed, mel_predicted = model(MODEL_INPUT)
     assert (
         durations.shape == expected_duration_shape
     ), f"Wrong shape, expected {expected_duration_shape}, got: {durations.shape}"
@@ -295,7 +287,7 @@ def test_model_forward_gpu() -> None:
 
 
 @patch(
-    "src.models.feature_models.non_attentive_tacotron.DurationPredictor.forward"
+    "src.model.non_attentive_tacotron.DurationPredictor.forward"
 )
 def test_model_inference(mock_duration: MagicMock) -> None:
     mock_duration.return_value = INPUT_DURATIONS.unsqueeze(2)
