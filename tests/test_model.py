@@ -112,13 +112,6 @@ def test_range_layer() -> None:
     assert (
         out.shape == expected_shape
     ), f"Wrong shape, expected {expected_shape}, got: {out.shape}"
-    for idx, length in enumerate(INPUT_LENGTH):
-        assert (
-            out[idx, length:] == zero_value
-        ).all(), "All values of tensor higher sequence length must be zero"
-        assert (
-            out[idx, length - 1] != zero_value
-        ).any(), f"Wrong zero vector for id = {idx}"
 
 
 def test_attention_layer_forward() -> None:

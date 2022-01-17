@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 import torch
 from torch import nn
+from torch.distributions import Normal
 from torch.nn import functional as f
 
 from src.data_process import VCTKBatch
@@ -21,7 +22,7 @@ class Prenet(nn.Module):
         self.layers = nn.ModuleList(
             [
                 LinearWithActivation(
-                    in_size, out_size, bias=False, activation="SoftPlus"
+                    in_size, out_size, bias=False
                 )
                 for (in_size, out_size) in zip(in_sizes, sizes)
             ]
@@ -125,7 +126,7 @@ class RangePredictor(nn.Module):
             bidirectional=True,
         )
         self.dropout = config.dropout
-        self.projection = LinearWithActivation(config.lstm_hidden * 2, 1)
+        self.projection = LinearWithActivation(config.lstm_hidden * 2, 1, activation=nn.Softplus())
 
     def forward(
             self, x: torch.Tensor, durations: torch.Tensor, input_lengths: torch.Tensor
@@ -143,6 +144,9 @@ class RangePredictor(nn.Module):
 
 
 class Attention(nn.Module):
+
+    EPS = torch.FloatTensor([1e-8])
+
     def __init__(
             self, embedding_dim: int, config: GaussianUpsampleParams
     ):
@@ -165,10 +169,11 @@ class Attention(nn.Module):
         # Calc gaussian weight for Gaussian upsampling attention
         duration_cumsum = durations.cumsum(dim=1).float()
         max_duration = duration_cumsum[:, -1, :].max().long()
-        c = duration_cumsum - 0.5 * durations
+        mu = duration_cumsum - 0.5 * durations
+        distr = Normal(mu, torch.maximum(ranges, self.EPS))
         t = torch.arange(0, max_duration.item()).view(1, 1, -1).to(ranges.device)
 
-        weights = torch.exp(-(ranges ** -2) * ((t - c) ** 2))
+        weights: torch.Tensor = torch.exp(distr.log_prob(t))
         weights_norm = torch.sum(weights, dim=1, keepdim=True) + self.eps
         weights = weights / weights_norm
 
